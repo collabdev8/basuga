@@ -33,5 +33,4 @@
 ├── package.json
 
 └── README.md
-
-https://collabdev8.github.io/basuga/
+https://chat-room-98-p38gp1.v2.appdeploy.ai/?utm_source=chatgpt.com
