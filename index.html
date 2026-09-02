@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+<title>Chat Room `98</title>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js">
+    
+</script>
+<style>
+:root {
+  --bg-color: #008080;
+  --panel-bg: #c0c0c0;
+  --text-color: #000000;
+  --accent: #000080;
+  --accent-text: #ffffff;
+  --border-light: #ffffff;
+  --border-dark: #000000;
+  --border-shadow: #808080;
+  --own-msg: #e6f3ff;
+  --other-msg: #ffffff;
+  --system-bg: #000080;
+  --danger: #800000;
+}
+
+[data-theme="dark"] {
+  --bg-color: #1a1a2e;
+  --panel-bg: #16213e;
+  --text-color: #e0e0e0;
+  --accent: #4a4e69;
+  --accent-text: #ffffff;
+  --border-light: #4a4e69;
+  --border-dark: #0f0f1a;
+  --border-shadow: #2d3142;
+  --own-msg: #1e3a5f;
+  --other-msg: #2d3142;
+  --system-bg: #4a4e69;
+  --danger: #9e2a2b;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'MS Sans Serif', Tahoma, sans-serif;
+  font-size: 13px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  overflow: hidden;
+}
+
+.page { width: 100%; height: 100%; }
+.hidden { display: none !important; }
+
+#loginPage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.login-container {
+  background: var(--panel-bg);
+  border: 2px solid var(--border-light);
+  border-right-color: var(--border-dark);
+  border-bottom-color: var(--border-dark);
+  box-shadow: 6px 6px 0 rgba(0,0,0,0.4);
+  padding: 30px;
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+}
+
+.login-icon { font-size: 24px; margin-bottom: 10px; }
+.login-title { font-size: 22px; margin: 0 0 8px; color: var(--accent); }
+.login-subtitle { opacity: 0.8; margin-bottom: 20px; }
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.login-label { font-weight: bold; font-size: 12px; }
+
+.login-form input {
+  padding: 10px;
+  border: 2px solid var(--border-dark);
+  border-top-color: var(--border-shadow);
+  border-left-color: var(--border-shadow);
+  background: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  width: 100%;
+}
+
+.password-wrapper { position: relative; }
+
+.toggle-password {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--panel-bg);
+  border: 2px solid var(--border-light);
+  border-right-color: var(--border-dark);
+  border-bottom-color: var(--border-dark);
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 12px;
+}
+
+.login-btn {
+  margin-top: 10px;
+  padding: 10px;
+  background: var(--panel-bg);
+  color: var(--text-color);
+  border: 2px solid var(--border-light);
+  border-right-color: var(--border-dark);
+  border-bottom-color: var(--border-dark);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.login-btn:hover { background: var(--accent); color: var(--accent-text); }
+.login-btn:active { border: 2px solid var(--border-dark); border-right-color: var(--border-light); border-bottom-color: var(--border-light); }
+
+.login-info {
+  margin-top: 20px;
+  padding: 10px;
+  background: #ffffcc;
+  border: 1px solid #cccc99;
+  font-size: 12px;
+  text-align: left;
+}
+
+.login-info code {
+  background: #000000;
+  color: #00ff00;
+  padding: 2px 6px;
+  font-family: 'Courier New', monospace;
+}
+
+.login-footer { margin-top: 20px; font-size: 11px; opacity: 0.7; }
+
+.chat-wrapper { display: flex; height: 100vh; width: 100%; }
+
+.members-sidebar {
+  width: 180px;
+  background: var(--panel-bg);
+  border: 2px solid var(--border-light);
+  border-right-color: var(--border-dark);
+  border-bottom-color: var(--border-dark);
+  display: flex;
+  flex-direction: column;
+}
+
+.members-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: bold;
+}
+
+.members-header h3 { margin: 0; font-size: 13px; }
+.members-list { overflow-y: auto; flex: 1; padding: 8px; }
+
+.member-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.member-item:hover { background: rgba(0,0,0,0.05); border-color: var(--accent); }
+.member-item .member-avatar { font-size: 18px; }
+.member-item .member-name { flex: 1; font-size: 12px; }
+
+.sidebar {
+  width: 240px;
+  background: var(--panel-bg);
+  border: 2px solid var(--border-light);
+  border-right-color: var(--border-dark);
+  border-bottom-color: var(--border-dark);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.sidebar-header h3 { margin: 0; font-size: 13px; }
+
+.close-sidebar {
+  background: var(--panel-bg);
+  border: 2px solid var(--border-light);
+  border-right-color: var(--border-dark);
+  border-bottom-color: var(--border-dark);
+  cursor: pointer;
+  color: var(--text-color);
+}
+
+.menu-links { flex: 1; overflow-y: auto; padding: 8px; }
+
+.menu-link-item {
+  padding: 8px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-size: 12px;
+}
+
+.menu-link-item:hover {
+  background: var(--accent);
+  color: var(--accent-text);
+  border: 2px solid var(--border-light);
+  border-right-color: var(--border-dark);
+  border-bottom-color: var(--border-dark);
+}
+
+.add-menu-section {
+  padding: 10px;
+  border-top: 2px solid var(--border-shadow);
+}
+
+.add-menu-section input,
+.add-menu-section select {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 6px;
+  border: 2px solid var(--border-dark);
+  border-top-color: var(--border-shadow);
+  border-left-color: var(--border-shadow);
+}
+
+.add-menu-section button { margin-right: 5px; }
+
+.chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 8px 12px;
+  background: var(--panel-bg);
+  border-bottom: 2px solid var(--border-dark);
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.navbar-logo { font-size: 20px; }
+.navbar-title { white-space: nowrap; }
+
+.navbar-nav {
+  display: flex;
+  gap: 5px;
+  flex: 1;
+}
+
+.nav-item {
+  padding: 6px 12px;
+  background: var(--panel-bg);
+  color: var(--text-color);
+  border: 2px solid var(--border-light);
+  border-right-color: var(--border-dark);
+  border-bottom-color: var(--border-dark);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.nav-item:hover { background: var(--accent); color: var(--accent-text); }
+.nav-item.active {
+  background: var(--accent);
+  color: var(--accent-text);
+  border: 2px solid var(--border-dark);
+  border-right-color: var(--border-light);
+  border-bottom-color: var(--border-light);
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-btn {
+  padding: 4px 8px;
+  background: var(--panel-bg);
+  border: 2px solid var(--border-light);
+  border-right-color: var(--border-dark);
+  border-bottom-color: var(--border-dark);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.icon-btn:hover { background: var(--accent); color: var(--accent-text); }
+
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-shadow);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.logout-btn {
+  padding: 5px 10px;
+  background: var(--panel-bg);
+  color: var(--text-color);
+  border: 2px solid var(--border-light);
+  border-right-color: var(--border-dark);
+  border-bottom-color: var(--border-dark);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.logout-btn:hover { background: var(--danger); color: var(--accent-text); }
+
+.hamburger {
+  display: none;
+  padding: 4px 8px;
+  background: var(--panel-bg);
+  border: 2px solid var(--border-light);
+  border-right-color: var(--border-dark);
+  border-bottom-color: var(--border-dark);
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.profile-panel {
+  background: var(--panel-bg);
+  border: 2px solid var(--border-light);
+  border-right-color: var(--border-dark);
+  border-bottom-color: var(--border-dark);
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.3);
+  margin: 10px;
+  max-width: 600px;
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.profile-header h3 { margin: 0; font-size: 14px; }
+
+.profile-body {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 20px;
+}
+
+.profile-avatar-section { text-align: center; }
+
+.profile-avatar {
+  width: 120px;
+  height: 120px;
+  font-size: 60px;
+  background: #ffffff;
+  border: 2px solid var(--border-dark);
+  border-top-color: var(--border-shadow);
+  border-left-color: var(--border-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 15px;
+  cursor: pointer;
+}
+
+.avatar-selector p { font-weight: bold; margin-bottom: 10px; font-size: 12px; }
+
+.avatar-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+}
+
+.avatar-option {
+  width: 36px;
+  height: 36px;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 2px solid var(--border-light);
+  border-right-color: var(--border-dark);
+  border-bottom-color: var(--border-dark);
+  cursor: pointer;
+}
+
+.avatar-option:hover,
+.avatar-option.selected { border: 2px solid var(--accent); background: #ffffcc; }
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-info label { font-weight: bold; font-size: 12px; }
+
+.profile-info input,
+.profile-info textarea,
+.profile-info select {
+  padding: 8px;
+  border: 2px solid var(--border-dark);
+  border-top-color: var(--border-shadow);
+  border-left-color: var(--border-shadow);
+  background: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  width: 100%;
+  color: #000000;
+}
+
+.profile-actions { display: flex; gap: 10px; margin-top: 10px; }
+
+.cancel-btn {
+  padding: 8px 16px;
+  background: var(--panel-bg);
+  border: 2px solid var(--border-light);
+  border-right-color: var(--border-dark);
+  border-bottom-color: var(--border-dark);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.cancel-btn:hover { background: var(--danger); color: var(--accent-text); }
+
+.admin-panel {
+  background: var(--panel-bg);
+  border: 2px solid var(--border-light);
+  border-right-color: var(--border-dark);
+  border-bottom-color: var(--border-dark);
+  margin: 10px;
+  padding: 15px;
+  max-width: 600px;
+}
+
+.admin-panel h3 { margin-top: 0; color: var(--accent); }
+
+.admin-section {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border-shadow);
+}
+
+.admin-section h4 { margin: 0 0 10px; }
+.admin-section input {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 8px;
+  border: 2px solid var(--border-dark);
+  border-top-color: var(--border-shadow);
+  border-left-color: var(--border-shadow);
+}
+
+.admin-section button {
+  padding: 6px 12px;
+  background: var(--panel-bg);
+  border: 2px solid var(--border-light);
+  border-right-color: var(--border-dark);
+  border-bottom-color: var(--border-dark);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.admin-section button:hover { background: var(--accent); color: var(--accent-text); }
+.admin-section ul { list-style: none; padding: 0; margin: 10px 0 0; max-height: 200px; overflow-y: auto; }
+.admin-section li {
+  padding: 6px;
+  border-bottom: 1px solid var(--border-shadow);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.chat-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin: 10px;
+  background: var(--panel-bg);
+  border: 2px solid var(--border-light);
+  border-right-color: var(--border-dark);
+  border-bottom-color: var(--border-dark);
+  min-height: 0;
+}
+
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.online-count { font-size: 11px; font-weight: normal; }
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+  background: #ffffff;
+}
+
+.message {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  padding: 8px;
+  border-radius: 0;
+  animation: msgIn 0.3s ease-out;
+}
+
+.message.own { background: var(--own-msg); border: 1px solid #b3d7ff; }
+.message.other { background: var(--other-msg); border: 1px solid #e0e0e0; }
+.message.system { justify-content: center; }
+
+.msg-avatar { font-size: 24px; margin-right: 10px; flex-shrink: 0; }
+.msg-content { flex: 1; min-width: 0; }
+
+.msg-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.msg-header strong { font-size: 13px; color: var(--accent); }
+.msg-time { font-size: 11px; color: #666666; }
+.msg-text { font-size: 13px; word-wrap: break-word; }
+
+.system-msg {
+  display: inline-block;
+  background: var(--system-bg);
+  color: #ffffff;
+  padding: 4px 12px;
+  border: 2px solid var(--border-light);
+  border-right-color: var(--border-dark);
+  border-bottom-color: var(--border-dark);
+  font-size: 11px;
+}
+
+.typing-indicator { padding: 8px 15px; font-size: 12px; color: #666666; font-style: italic; }
+
+.input-area {
+  display: flex;
+  gap: 5px;
+  padding: 10px;
+  background: var(--panel-bg);
+  border-top: 2px solid var(--border-shadow);
+  position: relative;
+}
+
+.input-area input[type="text"] {
+  flex: 1;
+  padding: 10px;
+  border: 2px solid var(--border-dark);
+  border-top-color: var(--border-shadow);
+  border-left-color: var(--border-shadow);
+  font-family: inherit;
+  font-size: 13px;
+  min-width: 0;
+}
+
+.input-area button {
+  padding: 8px 12px;
+  background: var(--panel-bg);
+  border: 2px solid var(--border-light);
+  border-right-color: var(--border-dark);
+  border-bottom-color: var(--border-dark);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.input-area button:hover { background: var(--accent); color: var(--accent-text); }
+
+.emoji-btn { font-size: 16px; }
+
+.emoji-picker {
+  position: absolute;
+  bottom: 55px;
+  left: 10px;
+  background: var(--panel-bg);
+  border: 2px solid var(--border-light);
+  border-right-color: var(--border-dark);
+  border-bottom-color: var(--border-dark);
+  padding: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  width: 180px;
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+  z-index: 100;
+}
+
+.emoji-picker span { font-size: 20px; cursor: pointer; padding: 4px; }
+.emoji-picker span:hover { background: var(--accent); border-radius: 4px; }
+
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  padding: 12px 20px;
+  background: var(--accent);
+  color: var(--accent-text);
+  border: 2px solid var(--border-light);
+  border-right-color: var(--border-dark);
+  border-bottom-color: var(--border-dark);
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+  font-size: 13px;
+  max-width: 300px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.toast.error { background: var(--danger); }
+
+.html-modal {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--panel-bg);
+  border: 2px solid var(--border-light);
+  border-right-color: var(--border-dark);
+  border-bottom-color: var(--border-dark);
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.modal-header h2 { margin: 0; font-size: 14px; }
+
+.modal-body {
+  padding: 15px;
+  overflow: auto;
+  flex: 1;
+  background: #ffffff;
+  color: #000000;
+}
+
+.close-btn {
+  background: var(--panel-bg);
+  border: 2px solid var(--border-light);
+  border-right-color: var(--border-dark);
+  border-bottom-color: var(--border-dark);
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #00ff00;
+  box-shadow: 0 0 4px #00ff00;
+}
+
+.status-dot.busy { background: #ff0000; box-shadow: 0 0 4px #ff0000; }
+.status-dot.away { background: #ffff00; box-shadow: 0 0 4px #ffff00; }
+.status-dot.offline { background: #808080; box-shadow: none; }
+.status-dot.admin { background: #ffff00; box-shadow: 0 0 4px #ffff00; }
+
+.member-status { font-size: 11px; color: #666666; }
+.member-status.online { color: #00aa00; font-weight: bold; }
+.member-id { font-size: 11px; color: #666666; }
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes msgIn {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: #dfdfdf; }
+::-webkit-scrollbar-thumb { background: #c0c0c0; border: 1px solid #808080; }
+::-webkit-scrollbar-thumb:hover { background: #a0a0a0; }
+
+@media (max-width: 768px) {
+  .members-sidebar { display: none; }
+  .hamburger { display: block; }
+  .navbar-nav {
+    display: none;
+    position: absolute;
+    top: 45px; left: 10px;
+    flex-direction: column;
+    background: var(--panel-bg);
+    border: 2px solid var(--border-light);
+    border-right-color: var(--border-dark);
+    border-bottom-color: var(--border-dark);
+    z-index: 200;
+    padding: 5px;
+    box-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+  }
+  .navbar-nav.show { display: flex; }
+  .navbar-actions { gap: 4px; }
+  .user-chip { max-width: 80px; overflow: hidden; text-overflow: ellipsis; }
+  .logout-text { display: none; }
+  .profile-body { grid-template-columns: 1fr; }
+  .input-area button { padding: 8px; }
+  .chat-box { margin: 5px; }
+}
+</style>
+</head>
+<body>
+  <div id="loginPage" class="page">
+    <div class="login-container">
+      <div class="login-icon">💿 WELCOME ✨</div>
+      <h1 class="login-title">💬 Chat Room`98</h1>
+      <p class="login-subtitle">เข้าสู่ระบบเพื่อเริ่มพูดคุยกับเพื่อน ๆ</p>
+
+      <div class="login-form">
+        <label for="userId" class="login-label">🆔 User ID</label>
+        <input type="text" id="userId" placeholder="กรอก User ID" autocomplete="username" />
+
+        <label for="password" class="login-label">🔒 Password</label>
+        <div class="password-wrapper">
+          <input type="password" id="password" placeholder="กรอกรหัสผ่าน" autocomplete="current-password" />
+          <button type="button" class="toggle-password" onclick="togglePassword()" title="แสดง/ซ่อนรหัสผ่าน">👁️</button>
+        </div>
+
+        <button class="login-btn" onclick="login()" id="loginBtn">
+          <span class="login-btn-text">เข้าสู่ระบบ</span>
+        </button>
+      </div>
+
+      <div class="login-info">
+        <p>💡 ทดลองใช้:</p>
+        <p>Admin: <code>admin</code> / <code>admin123</code></p>
+        <p>User: <code>user1</code> / <code>user123</code></p>
+      </div>
+
+      <p class="login-footer">© 1998 Chat Room`98</p>
+    </div>
+  </div>
+
+  <div id="chatPage" class="page hidden">
+    <div class="chat-wrapper">
+      <div id="toast" class="toast hidden"></div>
+
+      <div class="sidebar hidden" id="sidebar">
+        <div class="sidebar-header">
+          <h3>🔗 Menu</h3>
+          <button class="close-sidebar" onclick="toggleSidebar()">✕</button>
+        </div>
+        <div id="menuLinks" class="menu-links"></div>
+        <div class="add-menu-section hidden" id="addMenuSection">
+          <h4>➕ Add Menu Link</h4>
+          <input type="text" id="menuTitle" placeholder="Link Title" />
+          <input type="text" id="menuUrl" placeholder="URL or HTML content" />
+          <select id="menuType">
+            <option value="url">Open URL</option>
+            <option value="html">Show HTML</option>
+          </select>
+          <button onclick="addMenuLink()">Add Link</button>
+          <button onclick="toggleAddMenu()" class="cancel-btn">Cancel</button>
+        </div>
+      </div>
+
+      <div class="members-sidebar" id="membersSidebar">
+        <div class="members-header">
+          <h3>👥 ออนไลน์</h3>
+          <span id="membersCount">0</span>
+        </div>
+        <div id="membersListSidebar" class="members-list"></div>
+      </div>
+
+      <div class="chat-container">
+        <div class="navbar">
+          <button class="hamburger" onclick="toggleMobileMenu()">☰</button>
+          <div class="navbar-brand">
+            <span class="navbar-logo">💬</span>
+            <span class="navbar-title">Chat Room`98</span>
+          </div>
+
+          <nav class="navbar-nav" id="navbarNav">
+            <button class="nav-item active" onclick="showChat()">💬 แชท</button>
+            <button class="nav-item" onclick="toggleSidebar()">🔗 เมนู</button>
+            <button id="adminBtn" class="nav-item hidden" onclick="toggleAdminPanel()">⚙️ Admin</button>
+            <button class="nav-item" onclick="toggleProfilePanel()">👤 โปรไฟล์</button>
+          </nav>
+
+          <div class="navbar-actions">
+            <button class="icon-btn" onclick="toggleTheme()" title="เปลี่ยนธีม">🌗</button>
+            <button class="icon-btn" onclick="toggleSound()" id="soundBtn" title="เปิด/ปิดเสียง">🔔</button>
+            <div class="navbar-user">
+              <span id="userDisplay" class="user-chip"></span>
+              <button class="logout-btn" onclick="logout()">🚪 <span class="logout-text">ออก</span></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-panel hidden" id="profilePanel">
+          <div class="profile-header">
+            <h3>👤 โปรไฟล์ผู้ใช้</h3>
+            <button class="close-btn" onclick="toggleProfilePanel()">✕</button>
+          </div>
+          <div class="profile-body">
+            <div class="profile-avatar-section">
+              <div class="profile-avatar" id="profileAvatar">😀</div>
+              <div class="avatar-selector">
+                <p>เลือก Avatar:</p>
+                <div class="avatar-options">
+                  <span class="avatar-option" onclick="selectAvatar('😀')">😀</span>
+                  <span class="avatar-option" onclick="selectAvatar('😎')">😎</span>
+                  <span class="avatar-option" onclick="selectAvatar('🤖')">🤖</span>
+                  <span class="avatar-option" onclick="selectAvatar('🐱')">🐱</span>
+                  <span class="avatar-option" onclick="selectAvatar('🐶')">🐶</span>
+                  <span class="avatar-option" onclick="selectAvatar('👻')">👻</span>
+                  <span class="avatar-option" onclick="selectAvatar('🎮')">🎮</span>
+                  <span class="avatar-option" onclick="selectAvatar('⭐')">⭐</span>
+                </div>
+              </div>
+            </div>
+            <div class="profile-info">
+              <label>ชื่อผู้ใช้:</label>
+              <input type="text" id="profileName" />
+              <label>สถานะ:</label>
+              <select id="profileStatus">
+                <option value="ออนไลน์">🟢 ออนไลน์</option>
+                <option value="ไม่ว่าง">🔴 ไม่ว่าง</option>
+                <option value="กลับมาเร็วๆนี้">🟡 กลับมาเร็วๆนี้</option>
+                <option value="ออฟไลน์">⚫ ออฟไลน์</option>
+              </select>
+              <label>เกี่ยวกับฉัน:</label>
+              <textarea id="profileBio" rows="3" placeholder="เขียนเกี่ยวกับตัวคุณ..."></textarea>
+              <div class="profile-actions">
+                <button class="login-btn" onclick="saveProfile()">💾 บันทึก</button>
+                <button class="cancel-btn" onclick="toggleProfilePanel()">ยกเลิก</button>
+              </div>
+              <div id="autoSaveStatus" style="font-size:11px;color:#666;margin-top:5px;height:16px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-panel hidden" id="adminPanel">
+          <h3>⚙️ Admin Panel</h3>
+          <div class="admin-section">
+            <h4>➕ Add New Member</h4>
+            <input type="text" id="newMemberId" placeholder="User ID" />
+            <input type="text" id="newMemberName" placeholder="Username" />
+            <input type="password" id="newMemberPass" placeholder="Password" />
+            <button onclick="addMember()">Add Member</button>
+          </div>
+          <div class="admin-section">
+            <h4>👥 Members List</h4>
+            <ul id="membersList"></ul>
+          </div>
+          <div class="admin-section">
+            <h4>🔗 Menu Management</h4>
+            <button onclick="toggleAddMenu()">➕ Add Menu Link</button>
+            <ul id="menuManageList"></ul>
+          </div>
+        </div>
+
+        <div class="chat-box">
+          <div class="chat-header" id="chatHeader">
+            <span>💬 ห้องแชทรวม</span>
+            <span class="online-count" id="onlineCount">👥 0 ออนไลน์</span>
+          </div>
+          <div id="messages" class="messages"></div>
+          <div id="typingIndicator" class="typing-indicator hidden">
+            <span>🤖 Bot กำลังพิมพ์...</span>
+          </div>
+          <div class="input-area">
+            <button class="emoji-btn" onclick="toggleEmojiPicker()" title="อีโมจิ">😊</button>
+            <div id="emojiPicker" class="emoji-picker hidden">
+              <span onclick="insertEmoji('😀')">😀</span>
+              <span onclick="insertEmoji('😂')">😂</span>
+              <span onclick="insertEmoji('❤️')">❤️</span>
+              <span onclick="insertEmoji('👍')">👍</span>
+              <span onclick="insertEmoji('🔥')">🔥</span>
+              <span onclick="insertEmoji('🎉')">🎉</span>
+              <span onclick="insertEmoji('🤔')">🤔</span>
+              <span onclick="insertEmoji('😭')">😭</span>
+            </div>
+            <input type="text" id="messageInput" placeholder="พิมพ์ข้อความ..." />
+            <input type="file" id="fileInput" style="display:none" accept="*/*" />
+            <button onclick="document.getElementById('fileInput').click()" title="แนบไฟล์">📎</button>
+            <button onclick="sendMessage()" title="ส่งข้อความ">🟢 Send</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="html-modal hidden" id="htmlModal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 id="modalTitle"></h2>
+            <button onclick="closeHtmlModal()" class="close-btn">✕</button>
+          </div>
+          <div id="modalBody" class="modal-body"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+// ==================== Database ====================
+class ChatDatabase {
+  constructor() {
+    this.storageKey = 'chatRoom98DB';
+    this.initDatabase();
+  }
+
+  initDatabase() {
+    if (!localStorage.getItem(this.storageKey)) {
+      const defaultData = {
+        users: [
+          { id: 'admin', name: 'Admin', password: 'admin123', isAdmin: true, avatar: '👨‍💼', status: 'ออนไลน์', bio: 'ผู้ดูแลระบบ' },
+          { id: 'user1', name: 'User 1', password: 'user123', isAdmin: false, avatar: '😀', status: 'ออนไลน์', bio: '' },
+          { id: 'Oy0', name: 'Oy0', password: 'adminOy0', isAdmin: true, avatar: '🤖', status: 'ออนไลน์', bio: 'Admin of this server' }
+        ],
+        messages: [],
+        menuLinks: [
+          { id: 'menu_1', title: '🏠 Home', url: 'https://example.com', type: 'url' },
+          { id: 'menu_2', title: '📁 Documents', url: 'https://example.com/docs', type: 'url' },
+          { id: 'menu_3', title: '📞 Contact', url: 'https://example.com/contact', type: 'url' }
+        ],
+        settings: { theme: 'light', soundEnabled: true, lastUpdated: new Date().toISOString() }
+      };
+      this.saveData(defaultData);
+    }
+  }
+
+  getData() {
+    const data = localStorage.getItem(this.storageKey);
+    return data ? JSON.parse(data) : null;
+  }
+
+  saveData(data) {
+    data.settings = { ...data.settings, lastUpdated: new Date().toISOString() };
+    localStorage.setItem(this.storageKey, JSON.stringify(data));
+  }
+
+  getUsers() { return this.getData().users; }
+  getUserById(id) { return this.getUsers().find(u => u.id === id); }
+  verifyUser(id, password) { const user = this.getUserById(id); return user && user.password === password ? user : null; }
+
+  addUser(userData) {
+    const data = this.getData();
+    if (data.users.find(u => u.id === userData.id)) return false;
+    data.users.push({ isAdmin: false, avatar: '😀', status: 'ออนไลน์', bio: '', ...userData });
+    this.saveData(data);
+    return true;
+  }
+
+  updateUser(id, updates) {
+    const data = this.getData();
+    const index = data.users.findIndex(u => u.id === id);
+    if (index !== -1) {
+      data.users[index] = { ...data.users[index], ...updates };
+      this.saveData(data);
+      return data.users[index];
+    }
+    return null;
+  }
+
+  deleteUser(id) {
+    const data = this.getData();
+    const index = data.users.findIndex(u => u.id === id);
+    if (index !== -1) {
+      data.users.splice(index, 1);
+      this.saveData(data);
+      return true;
+    }
+    return false;
+  }
+
+  getMessages() { return this.getData().messages; }
+  addMessage(message) {
+    const data = this.getData();
+    message.id = message.id || 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+    message.timestamp = message.timestamp || new Date().toISOString();
+    data.messages.push(message);
+    this.saveData(data);
+    return message;
+  }
+
+  deleteMessage(id) {
+    const data = this.getData();
+    const index = data.messages.findIndex(m => m.id === id);
+    if (index !== -1) { data.messages.splice(index, 1); this.saveData(data); return true; }
+    return false;
+  }
+
+  clearMessages() { const data = this.getData(); data.messages = []; this.saveData(data); }
+
+  getMenuLinks() { return this.getData().menuLinks; }
+  addMenuLink(link) {
+    const data = this.getData();
+    link.id = link.id || 'menu_' + Date.now();
+    data.menuLinks.push(link);
+    this.saveData(data);
+    return link;
+  }
+
+  updateMenuLink(id, updates) {
+    const data = this.getData();
+    const index = data.menuLinks.findIndex(m => m.id === id);
+    if (index !== -1) { data.menuLinks[index] = { ...data.menuLinks[index], ...updates }; this.saveData(data); return data.menuLinks[index]; }
+    return null;
+  }
+
+  deleteMenuLink(id) {
+    const data = this.getData();
+    const index = data.menuLinks.findIndex(m => m.id === id);
+    if (index !== -1) { data.menuLinks.splice(index, 1); this.saveData(data); return true; }
+    return false;
+  }
+
+  getSettings() { return this.getData().settings; }
+  updateSettings(updates) { const data = this.getData(); data.settings = { ...data.settings, ...updates }; this.saveData(data); return data.settings; }
+  resetDatabase() { localStorage.removeItem(this.storageKey); this.initDatabase(); return true; }
+}
+
+const db = new ChatDatabase();
+
+// ==================== App ====================
+let currentUser = null;
+let selectedAvatar = '😀';
+let autoSaveTimer = null;
+const AUTO_SAVE_DELAY = 1200;
+
+function $(id) { return document.getElementById(id); }
+
+function togglePassword() {
+  const input = $('password');
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+function showToast(message, isError) {
+  const toast = $('toast');
+  toast.textContent = message;
+  toast.className = 'toast ' + (isError ? 'error' : '');
+  setTimeout(() => toast.classList.add('hidden'), 3000);
+}
+
+function formatTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+}
+
+function playSound() {
+  const settings = db.getSettings();
+  if (!settings.soundEnabled) return;
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 600;
+    gain.gain.value = 0.05;
+    osc.start();
+    osc.stop(ctx.currentTime + 0.05);
+  } catch (e) {}
+}
+
+// ==================== Settings Auto-save ====================
+function updateSetting(key, value) {
+  try {
+    const settings = db.getSettings();
+    if (settings[key] !== value) {
+      db.updateSettings({ [key]: value });
+      return true;
+    }
+    return false;
+  } catch (e) {
+    console.error('Failed to save setting:', e);
+    showToast('ไม่สามารถบันทึกการตั้งค่าได้', true);
+    return false;
+  }
+}
+
+function applySettings() {
+  try {
+    const settings = db.getSettings() || { theme: 'light', soundEnabled: true };
+    document.documentElement.setAttribute('data-theme', settings.theme || 'light');
+    const soundBtn = $('soundBtn');
+    if (soundBtn) soundBtn.textContent = settings.soundEnabled !== false ? '🔔' : '🔕';
+  } catch (e) {
+    console.error('Failed to apply settings:', e);
+  }
+}
+
+function toggleTheme() {
+  const settings = db.getSettings() || { theme: 'light' };
+  const newTheme = settings.theme === 'dark' ? 'light' : 'dark';
+  if (updateSetting('theme', newTheme)) {
+    applySettings();
+    showToast('บันทึกธีม ' + (newTheme === 'dark' ? 'มืด' : 'สว่าง') + ' แล้ว');
+  }
+}
+
+function toggleSound() {
+  const settings = db.getSettings() || { soundEnabled: true };
+  const newSound = settings.soundEnabled !== false ? false : true;
+  if (updateSetting('soundEnabled', newSound)) {
+    applySettings();
+    showToast(newSound ? 'เปิดเสียงแจ้งเตือนแล้ว' : 'ปิดเสียงแจ้งเตือนแล้ว');
+  }
+}
+
+// ==================== Auth ====================
+function login() {
+  const id = $('userId').value.trim();
+  const pass = $('password').value.trim();
+  if (!id || !pass) { showToast('กรุณากรอก User ID และ Password', true); return; }
+
+  const user = db.verifyUser(id, pass);
+  if (user) {
+    currentUser = user;
+    $('loginPage').classList.add('hidden');
+    $('chatPage').classList.remove('hidden');
+    if (user.isAdmin) $('adminBtn').classList.remove('hidden');
+    applySettings();
+    updateUserDisplay();
+    renderMessages();
+    renderMenuLinks();
+    updateMembersLists();
+    db.updateUser(user.id, { status: 'ออนไลน์' });
+    currentUser = db.getUserById(user.id);
+    addSystemMessage(user.name + ' เข้าสู่ระบบ');
+    showToast('ยินดีต้อนรับ ' + user.name);
+  } else {
+    showToast('User ID หรือ Password ไม่ถูกต้อง', true);
+  }
+}
+
+function logout() {
+  if (currentUser) {
+    db.updateUser(currentUser.id, { status: 'ออฟไลน์' });
+    addSystemMessage(currentUser.name + ' ออกจากระบบ');
+  }
+  currentUser = null;
+  $('chatPage').classList.add('hidden');
+  $('loginPage').classList.remove('hidden');
+  $('adminBtn').classList.add('hidden');
+  $('profilePanel').classList.add('hidden');
+  $('adminPanel').classList.add('hidden');
+  $('sidebar').classList.add('hidden');
+  $('userId').value = '';
+  $('password').value = '';
+}
+
+function updateUserDisplay() {
+  if (!currentUser) return;
+  $('userDisplay').textContent = currentUser.avatar + ' ' + currentUser.name;
+}
+
+// ==================== Chat ====================
+function addSystemMessage(text) {
+  db.addMessage({ type: 'system', text: text, senderId: 'system', senderName: 'System' });
+  renderMessages();
+}
+
+function sendMessage() {
+  const input = $('messageInput');
+  const text = input.value.trim();
+  if (!text || !currentUser) return;
+
+  db.addMessage({
+    type: 'chat',
+    text: text,
+    senderId: currentUser.id,
+    senderName: currentUser.name,
+    senderAvatar: currentUser.avatar
+  });
+  input.value = '';
+  renderMessages();
+  playSound();
+
+  if (text.includes('@bot') || text.toLowerCase().includes('bot')) {
+    $('typingIndicator').classList.remove('hidden');
+    setTimeout(() => {
+      $('typingIndicator').classList.add('hidden');
+      db.addMessage({
+        type: 'chat',
+        text: 'สวัสดี! ฉันคือ Bot ของห้องแชทนี้ 🤖',
+        senderId: 'bot',
+        senderName: 'Bot',
+        senderAvatar: '🤖'
+      });
+      renderMessages();
+      playSound();
+    }, 1500);
+  }
+}
+
+function renderMessages() {
+  const container = $('messages');
+  container.innerHTML = '';
+  const msgs = db.getMessages();
+  msgs.forEach(msg => {
+    if (msg.type === 'system') {
+      const div = document.createElement('div');
+      div.className = 'message system';
+      div.innerHTML = '<span class="system-msg">' + escapeHtml(msg.text) + '</span>';
+      container.appendChild(div);
+    } else {
+      const isOwn = msg.senderId === currentUser.id;
+      const div = document.createElement('div');
+      div.className = 'message ' + (isOwn ? 'own' : 'other');
+      div.innerHTML =
+        '<div class="msg-avatar">' + (msg.senderAvatar || '😀') + '</div>' +
+        '<div class="msg-content">' +
+          '<div class="msg-header">' +
+            '<strong>' + escapeHtml(msg.senderName || 'Unknown') + '</strong>' +
+            '<span class="msg-time">' + formatTime(msg.timestamp) + '</span>' +
+          '</div>' +
+          '<div class="msg-text">' + escapeHtml(msg.text) + '</div>' +
+        '</div>';
+      container.appendChild(div);
+    }
+  });
+  container.scrollTop = container.scrollHeight;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ==================== Members ====================
+function updateMembersLists() {
+  const users = db.getUsers();
+  const online = users.filter(u => u.status !== 'ออฟไลน์');
+  $('membersCount').textContent = online.length;
+  $('onlineCount').textContent = '👥 ' + online.length + ' ออนไลน์';
+
+  const sidebarList = $('membersListSidebar');
+  sidebarList.innerHTML = '';
+  users.forEach(u => {
+    const div = document.createElement('div');
+    div.className = 'member-item';
+    div.innerHTML =
+      '<span class="member-avatar">' + u.avatar + '</span>' +
+      '<span class="member-name">' + escapeHtml(u.name) + '</span>' +
+      '<span class="status-dot ' + getStatusClass(u.status) + '"></span>';
+    sidebarList.appendChild(div);
+  });
+
+  const adminList = $('membersList');
+  if (adminList) {
+    adminList.innerHTML = '';
+    users.forEach(u => {
+      const li = document.createElement('li');
+      li.innerHTML =
+        escapeHtml(u.name) + ' <code>' + u.id + '</code> ' + (u.isAdmin ? '<b>[Admin]</b>' : '') +
+        (currentUser && currentUser.id !== u.id ? ' <button onclick="deleteMember(\'' + u.id + '\')">ลบ</button>' : '');
+      adminList.appendChild(li);
+    });
+  }
+}
+
+function getStatusClass(status) {
+  if (status === 'ออนไลน์') return '';
+  if (status === 'ไม่ว่าง') return 'busy';
+  if (status === 'กลับมาเร็วๆนี้') return 'away';
+  return 'offline';
+}
+
+// ==================== UI Panels ====================
+function toggleSidebar() {
+  $('sidebar').classList.toggle('hidden');
+}
+
+function toggleMobileMenu() {
+  $('navbarNav').classList.toggle('show');
+}
+
+function showChat() {
+  $('profilePanel').classList.add('hidden');
+  $('adminPanel').classList.add('hidden');
+  document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.nav-item')[0].classList.add('active');
+  $('navbarNav').classList.remove('show');
+}
+
+function toggleProfilePanel() {
+  const panel = $('profilePanel');
+  if (panel.classList.contains('hidden')) {
+    if (!currentUser) return;
+    $('profileName').value = currentUser.name;
+    $('profileStatus').value = currentUser.status;
+    $('profileBio').value = currentUser.bio || '';
+    selectAvatar(currentUser.avatar || '😀');
+    $('autoSaveStatus').textContent = '';
+    panel.classList.remove('hidden');
+    $('adminPanel').classList.add('hidden');
+  } else {
+    panel.classList.add('hidden');
+  }
+}
+
+function selectAvatar(avatar) {
+  selectedAvatar = avatar;
+  $('profileAvatar').textContent = avatar;
+  document.querySelectorAll('.avatar-option').forEach(el => {
+    el.classList.toggle('selected', el.textContent === avatar);
+  });
+  scheduleAutoSave();
+}
+
+function saveProfile(silent) {
+  clearTimeout(autoSaveTimer);
+  if (!currentUser) return false;
+  const updates = {
+    name: $('profileName').value.trim() || currentUser.name,
+    status: $('profileStatus').value,
+    bio: $('profileBio').value.trim(),
+    avatar: selectedAvatar
+  };
+  db.updateUser(currentUser.id, updates);
+  currentUser = db.getUserById(currentUser.id);
+  updateUserDisplay();
+  updateMembersLists();
+  const statusEl = $('autoSaveStatus');
+  if (statusEl) statusEl.textContent = 'บันทึกแล้ว';
+  if (!silent) {
+    toggleProfilePanel();
+    showToast('บันทึกโปรไฟล์แล้ว');
+  }
+  return true;
+}
+
+function scheduleAutoSave() {
+  clearTimeout(autoSaveTimer);
+  const statusEl = $('autoSaveStatus');
+  if (statusEl) statusEl.textContent = 'กำลังบันทึก...';
+  autoSaveTimer = setTimeout(() => {
+    if (currentUser && !$('profilePanel').classList.contains('hidden')) {
+      saveProfile(true);
+    }
+  }, AUTO_SAVE_DELAY);
+}
+
+function setupProfileAutoSave() {
+  ['profileName', 'profileStatus', 'profileBio'].forEach(id => {
+    const el = $(id);
+    if (el) el.addEventListener('input', scheduleAutoSave);
+  });
+}
+
+function toggleAdminPanel() {
+  const panel = $('adminPanel');
+  if (panel.classList.contains('hidden')) {
+    if (!currentUser || !currentUser.isAdmin) { showToast('ไม่มีสิทธิ์เข้าถึง', true); return; }
+    panel.classList.remove('hidden');
+    $('profilePanel').classList.add('hidden');
+    updateMembersLists();
+    renderMenuManageList();
+    document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+    $('adminBtn').classList.add('active');
+  } else {
+    panel.classList.add('hidden');
+  }
+}
+
+// ==================== Admin ====================
+function addMember() {
+  const id = $('newMemberId').value.trim();
+  const name = $('newMemberName').value.trim();
+  const pass = $('newMemberPass').value.trim();
+  if (!id || !name || !pass) { showToast('กรุณากรอกข้อมูลให้ครบ', true); return; }
+
+  const ok = db.addUser({ id, name, password: pass });
+  if (ok) {
+    showToast('เพิ่มสมาชิกสำเร็จ');
+    $('newMemberId').value = '';
+    $('newMemberName').value = '';
+    $('newMemberPass').value = '';
+    updateMembersLists();
+    renderMenuManageList();
+  } else {
+    showToast('User ID นี้มีอยู่แล้ว', true);
+  }
+}
+
+function deleteMember(id) {
+  if (!currentUser || !currentUser.isAdmin) return;
+  if (id === currentUser.id) { showToast('ไม่สามารถลบตัวเองได้', true); return; }
+  if (confirm('ต้องการลบสมาชิกนี้?')) {
+    db.deleteUser(id);
+    updateMembersLists();
+    renderMenuManageList();
+    showToast('ลบสมาชิกแล้ว');
+  }
+}
+
+// ==================== Menu Links ====================
+function toggleAddMenu() {
+  $('addMenuSection').classList.toggle('hidden');
+}
+
+function addMenuLink() {
+  const title = $('menuTitle').value.trim();
+  const url = $('menuUrl').value.trim();
+  const type = $('menuType').value;
+  if (!title || !url) { showToast('กรุณากรอกข้อมูลให้ครบ', true); return; }
+
+  db.addMenuLink({ title, url, type });
+  showToast('เพิ่มลิงก์แล้ว');
+  $('menuTitle').value = '';
+  $('menuUrl').value = '';
+  renderMenuLinks();
+  renderMenuManageList();
+}
+
+function deleteMenuLink(id) {
+  if (!currentUser || !currentUser.isAdmin) return;
+  if (confirm('ต้องการลบลิงก์นี้?')) {
+    db.deleteMenuLink(id);
+    renderMenuLinks();
+    renderMenuManageList();
+    showToast('ลบลิงก์แล้ว');
+  }
+}
+
+function renderMenuLinks() {
+  const container = $('menuLinks');
+  container.innerHTML = '';
+  db.getMenuLinks().forEach(link => {
+    const div = document.createElement('div');
+    div.className = 'menu-link-item';
+    div.textContent = link.title;
+    div.onclick = () => openMenuLink(link);
+    container.appendChild(div);
+  });
+}
+
+function renderMenuManageList() {
+  const list = $('menuManageList');
+  if (!list) return;
+  list.innerHTML = '';
+  db.getMenuLinks().forEach(link => {
+    const li = document.createElement('li');
+    li.innerHTML =
+      escapeHtml(link.title) + ' (' + link.type + ') ' +
+      '<button onclick="deleteMenuLink(\'' + link.id + '\')">ลบ</button>';
+    list.appendChild(li);
+  });
+}
+
+function openMenuLink(link) {
+  if (link.type === 'html') {
+    $('modalTitle').textContent = link.title;
+    $('modalBody').innerHTML = link.url;
+    $('htmlModal').classList.remove('hidden');
+  } else {
+    window.open(link.url, '_blank');
+  }
+}
+
+function closeHtmlModal() {
+  $('htmlModal').classList.add('hidden');
+}
+
+// ==================== Emoji ====================
+function toggleEmojiPicker() {
+  $('emojiPicker').classList.toggle('hidden');
+}
+
+function insertEmoji(emoji) {
+  const input = $('messageInput');
+  input.value += emoji;
+  input.focus();
+  $('emojiPicker').classList.add('hidden');
+}
+
+// ==================== Events ====================
+$('fileInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file || !currentUser) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const text = file.type.startsWith('image/') ? '[รูปภาพ: ' + file.name + ']' : '[ไฟล์: ' + file.name + ']';
+    db.addMessage({
+      type: 'chat',
+      text: text,
+      senderId: currentUser.id,
+      senderName: currentUser.name,
+      senderAvatar: currentUser.avatar
+    });
+    renderMessages();
+  };
+  reader.readAsDataURL(file);
+  this.value = '';
+});
+
+$('messageInput').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') sendMessage();
+});
+
+$('password').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') login();
+});
+
+// ==================== Initialize ====================
+document.addEventListener('DOMContentLoaded', function() {
+  applySettings();
+  setupProfileAutoSave();
+});
+</script>
+</body>
+</html>
